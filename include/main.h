@@ -23,7 +23,7 @@
 #include "MHZ14ASensor.h"
 #include "DS3231Driver.h"
 #include "MQTTConnection.h"
-
+#include "insightsDriver.h"
 
 
 /******************************************************************************

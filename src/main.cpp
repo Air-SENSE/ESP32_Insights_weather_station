@@ -1,133 +1,83 @@
-#include <Arduino.h>
-
-#include <WiFi.h>
-
-const char* ssid     = "BK Star";
-const char* password = "bkstar2021";
-
-#define ESP_INSIGHTS_AUTH_KEY "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMjUyY2FlNWYtMThmMy00YmM4LThmZTEtMGQ5MWUwMzMwZTA4IiwiZXhwIjoxOTg5MDY3NTk3LCJpYXQiOjE2NzM3MDc1OTcsImlzcyI6ImUzMjJiNTljLTYzY2MtNGU0MC04ZWEyLTRlNzc2NjU0NWNjYSIsInN1YiI6IjdhYTlkMmNkLTVhYTItNGU3Yy05ZTY3LWZhNDJmODgyMzYwYyJ9.vyRc2fueIS0JjP6apXg4__bf7wwPGkxjz7KjMwkzf-Y2mKjqfmYJCfSiRwzyRU9Y767ZOzinKvmkqF0DGvpqoAIyLCudi5fylnua6mZcNmxeTFL4jMIMbmYXQOnEBul-qpZCMM_1fkPh2z0_Hi7VRfksEjyyfc_7hpeINfQba1vowc1lL6JxDLmdYP4rs60Y4VQLKyGFMUxkazwV_HREtvgxsBU05IS6LDxLJuUTR_LpPnON0qy9XYHR9EXRkgH8qejbOtId1GBrmDnwTVL5eF7UtkOVvvXTW9NqNMAWJ9yctRCLyFPllFJNrvuZXTvCa6uXe74HBG6qBp-h7QkNbg"
-#define METRICS_DUMP_INTERVAL           10 * 1000
-#define METRICS_DUMP_INTERVAL_TICKS     (METRICS_DUMP_INTERVAL / portTICK_RATE_MS)
-static const char *TAG_INSIGHTS = "INSIGHTS";
-
-unsigned long lastPublishedMetrics = millis();
-bool insightsEnabled = true;
-bool insightsLoop = true;
-
-#include "esp32-hal-log.h"
-#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
-#include "esp_log.h"
-#include <esp_insights.h>
-#include "esp_diagnostics_system_metrics.h"
-#include <esp_diagnostics_metrics.h>
-#include <esp_diagnostics_variables.h>
-#include "esp_rmaker_utils.h"
-
-#include <firmware_info.h>
-
-// void TaskEspInsights( void *pvParameters ){
-//     while (true) {
-//         esp_diag_heap_metrics_dump();
-//         esp_diag_wifi_metrics_dump();
-//         log_d("ESP-Insights heap and wifi metrics updated from xTask");
-//         vTaskDelay(METRICS_DUMP_INTERVAL_TICKS*2);
-//     }
-// }
-
-void init_insights(void){
-    esp_rmaker_time_sync_init(NULL);
-    esp_insights_config_t config = {
-      .log_type = ESP_DIAG_LOG_TYPE_ERROR | ESP_DIAG_LOG_TYPE_WARNING | ESP_DIAG_LOG_TYPE_EVENT,
-      .auth_key = ESP_INSIGHTS_AUTH_KEY,
-    };
-
-    esp_err_t ret = esp_insights_init(&config);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG_INSIGHTS, "Failed to initialize ESP Insights, err:0x%x", ret);
-    }
-    // ESP_ERROR_CHECK(ret);
-
-    esp_diag_heap_metrics_dump();
-    esp_diag_wifi_metrics_dump();
-
-    // Register a Metric:
-    esp_diag_metrics_register("ControlDeviceStatus", "CDstatus", "ControlDevice current status", "AccessCtrl", ESP_DIAG_DATA_TYPE_UINT);
-    // uint32_t statusNum = 12;
-    // esp_diag_metrics_add_uint("CDstatus", statusNum);
-
-    esp_diag_metrics_register("ControlDevice button count", "pushCount", "ControlDevice button push count", "AccessCtrl", ESP_DIAG_DATA_TYPE_UINT);
-    
-
-    // Register a Variable:
-    esp_diag_variable_register("Wi-Fi", "lastEvent", "Last event", "Wi-Fi.Events", ESP_DIAG_DATA_TYPE_UINT);
-    esp_diag_variable_add_uint("lastEvent", 7);
-    
-    esp_diag_variable_register("AccessCtrl", "lockStatus", "Lock status", "AccessCtrl.ControlDevice", ESP_DIAG_DATA_TYPE_STR);
+#include "main.h"
 
 
-    // xTaskCreatePinnedToCore(
-    //     TaskEspInsights
-    //     ,  "EspInsights"
-    //     ,  1024*4  // Stack size
-    //     ,  NULL
-    //     ,  1  // Priority
-    //     ,  NULL 
-    //     ,  ARDUINO_RUNNING_CORE);
+void device_getData()
+{
+  struct sensorData sensorDataTemp_st;
 
+  if(pms_getdata(sensorDataTemp_st.pm1_u32, sensorDataTemp_st.pm25_u32, sensorDataTemp_st.pm10_u32)== ERROR_NONE)
+  {
+    sensorData_st.pm1_u32   = sensorDataTemp_st.pm1_u32;
+    sensorData_st.pm25_u32  = sensorDataTemp_st.pm25_u32;
+    sensorData_st.pm10_u32  = sensorDataTemp_st.pm10_u32;
+  }
+  if(bme_readData(sensorDataTemp_st.temperature, sensorDataTemp_st.humidity, sensorDataTemp_st.pressure_u32) == ERROR_NONE)
+    {
+    sensorData_st.temperature   = sensorDataTemp_st.temperature;
+    sensorData_st.humidity      = sensorDataTemp_st.humidity;
+    sensorData_st.pressure_u32  = sensorDataTemp_st.pressure_u32;
+  }
+  if(mhz_getdata(sensorDataTemp_st.co_2_u32) == ERROR_NONE)
+  {
+    sensorData_st.co_2_u32  = sensorDataTemp_st.co_2_u32;
+  }
 }
 
-
-
-static const char *insightsTAG = "esp_insights";
-
-unsigned long currentLoopMillis = 0;
-unsigned long previousMainLoopMillis = 0;
+void device_dataManagement()
+{  
+  struct sensorData sensorDataTemp_st;
+  sensorDataTemp_st = sensorData_st;
+  DS3231_getStringDateTime(realTime, DateTime::TIMESTAMP_FULL , dateTime_string);	
+  createSensorDataString(sensorDataString, NAME_DEVICE, dateTime_string ,sensorDataTemp_st);
+	DS3231_getStringDateTime(realTime, DateTime::TIMESTAMP_DATE, nameFileSaveData);
+	SDcard_saveStringDataToFile(&connectionStatus_st, sensorDataString);
+  createMessageMQTTString(messageData, (const char *)espID, timeClient, sensorDataTemp_st);
+  MQTT_postData(messageData.c_str(), &connectionStatus_st, mqttClient);
+}
 
 void setup() {
-
-    // Open USB serial port
-    Serial.begin(115200);
-    Serial.setDebugOutput(true);
-    // esp_log_level_set("*", ESP_LOG_VERBOSE);
-    esp_log_level_set("*", ESP_LOG_ERROR);
-    esp_log_level_set("cpu_start", ESP_LOG_INFO);
-    esp_log_level_set(insightsTAG, ESP_LOG_VERBOSE);
-    // esp_log_level_set("esp_core_dump_elf", ESP_LOG_VERBOSE);
-
-    show_flash_info();
-    show_firmware_description();
-
-    Serial.printf("\n\nConnecting to %s", ssid);
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    init_insights();
-
-    ESP_LOGI(TAG_INSIGHTS, "###  Looping time");
-    log_i("###  Looping time");
+    Serial.begin(SERIAL_DEBUG_BAUDRATE);
+    log_e("Booting...");
+    WIFI_init();
+    Wire.begin(PIN_SDA_GPIO, PIN_SCL_GPIO, I2C_CLOCK_SPEED);
+    mhz_init();
+    bme_initialize(Wire);
+    pms_init();
+	  DS3231_init(realTime, timeClient, Wire, connectionStatus_st);
+#ifdef USING_MQTT
+	MQTT_initClient(topic, espID, mqttClient, &connectionStatus_st);
+	timeClient.begin();
+#endif
+    insights_init();
+#ifdef USING_SDCARD
+	SDcard_init(PIN_NUM_CLK, PIN_NUM_MISO, PIN_NUM_MOSI, PIN_CS_SD_CARD, &connectionStatus_st);
+#endif
+    log_e("Init Done");
+  unsigned long time_4_first_record = millis();
+  while (millis() - time_4_first_record < DEVICE_PRE_GET_DATE_TIME)
+  {
+    device_getData();  
+    DS3231_getStringDateTime(realTime, DateTime::TIMESTAMP_FULL , dateTime_string);	
+  }
 }
 
-int count = 0;  // Variable for debugging purpose
+unsigned long device_previousDataControl = 0;
+unsigned long device_previousWifiReconnect = 0;
+
 void loop() {
-
-    currentLoopMillis = millis();
-
-    if(insightsEnabled && insightsLoop && (currentLoopMillis-lastPublishedMetrics > METRICS_DUMP_INTERVAL)){
-        lastPublishedMetrics = currentLoopMillis;
-        count++;
-        esp_diag_heap_metrics_dump();
-        esp_diag_wifi_metrics_dump();
-        log_d("ESP-Insights heap and wifi metrics updated from loop");
-    }
-
-    previousMainLoopMillis = currentLoopMillis;
+  // get data from all sensor
+  device_getData();
+  if(millis() - device_previousDataControl > DEVICE_DATA_SAVE_INTERVAL_TIME) 
+  {
+    device_dataManagement();
+    device_previousDataControl = millis();
+  }
+  // if WiFi is down, try reconnecting every CHECK_WIFI_TIME seconds
+  if ((WiFi.status() != WL_CONNECTED) && (millis() - device_previousWifiReconnect >= WIFI_CONNECT_INTERVAL)) {
+    log_e("Reconnecting to WiFi...");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    device_previousWifiReconnect = millis();
+  }
+  insights_post_data();
 }
