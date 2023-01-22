@@ -66,11 +66,11 @@ ERROR_CODE createMessageMQTTString( String &messageMQTTString,
     
     doc["Temperature"] = _sensorData_st.temperature;
     doc["Humidity"] = _sensorData_st.humidity;
-    doc["Pressure"] = _sensorData_st.pressure_u32;
-    doc["PM1"]  = _sensorData_st.pm1_u32;
-    doc["PM2p5"] = _sensorData_st.pm25_u32;
-    doc["PM10"] = _sensorData_st.pm10_u32;
-    doc["CO2_PPM"] = _sensorData_st.co_2_u32;
+    // doc["Pressure"] = _sensorData_st.pressure_u32;
+    // doc["PM1"]  = _sensorData_st.pm1_u32;
+    // doc["PM2p5"] = _sensorData_st.pm25_u32;
+    // doc["PM10"] = _sensorData_st.pm10_u32;
+    // doc["CO2_PPM"] = _sensorData_st.co_2_u32;
 
     String output;
     serializeJson(doc, output);

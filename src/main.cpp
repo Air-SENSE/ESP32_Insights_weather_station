@@ -5,21 +5,10 @@ void device_getData()
 {
   struct sensorData sensorDataTemp_st;
 
-  if(pms_getdata(sensorDataTemp_st.pm1_u32, sensorDataTemp_st.pm25_u32, sensorDataTemp_st.pm10_u32)== ERROR_NONE)
-  {
-    sensorData_st.pm1_u32   = sensorDataTemp_st.pm1_u32;
-    sensorData_st.pm25_u32  = sensorDataTemp_st.pm25_u32;
-    sensorData_st.pm10_u32  = sensorDataTemp_st.pm10_u32;
-  }
-  if(bme_readData(sensorDataTemp_st.temperature, sensorDataTemp_st.humidity, sensorDataTemp_st.pressure_u32) == ERROR_NONE)
+  if(sht_getdata(sensorDataTemp_st.temperature, sensorDataTemp_st.humidity) == ERROR_NONE)
     {
     sensorData_st.temperature   = sensorDataTemp_st.temperature;
     sensorData_st.humidity      = sensorDataTemp_st.humidity;
-    sensorData_st.pressure_u32  = sensorDataTemp_st.pressure_u32;
-  }
-  if(mhz_getdata(sensorDataTemp_st.co_2_u32) == ERROR_NONE)
-  {
-    sensorData_st.co_2_u32  = sensorDataTemp_st.co_2_u32;
   }
 }
 
@@ -39,16 +28,17 @@ void setup() {
     Serial.begin(SERIAL_DEBUG_BAUDRATE);
     log_e("Booting...");
     WIFI_init();
+    if(WiFi.status() == WL_CONNECTED)
+    {
+      insights_init();
+    }
     Wire.begin(PIN_SDA_GPIO, PIN_SCL_GPIO, I2C_CLOCK_SPEED);
-    mhz_init();
-    bme_initialize(Wire);
-    pms_init();
 	  DS3231_init(realTime, timeClient, Wire, connectionStatus_st);
+    sht_init();
 #ifdef USING_MQTT
 	MQTT_initClient(topic, espID, mqttClient, &connectionStatus_st);
 	timeClient.begin();
 #endif
-    insights_init();
 #ifdef USING_SDCARD
 	SDcard_init(PIN_NUM_CLK, PIN_NUM_MISO, PIN_NUM_MOSI, PIN_CS_SD_CARD, &connectionStatus_st);
 #endif

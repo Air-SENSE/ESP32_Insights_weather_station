@@ -141,7 +141,6 @@ ERROR_CODE insights_init() {
     return ERROR_NONE;
 }
 
-int count = 0;  // Variable for debugging purpose
 
 ERROR_CODE insights_post_data() 
 {
@@ -150,7 +149,6 @@ ERROR_CODE insights_post_data()
 
     if(insightsEnabled && insightsLoop && (currentLoopMillis-lastPublishedMetrics > METRICS_DUMP_INTERVAL)){
         lastPublishedMetrics = currentLoopMillis;
-        count++;
         esp_diag_heap_metrics_dump();
         esp_diag_wifi_metrics_dump();
         log_d("ESP-Insights heap and wifi metrics updated from loop");

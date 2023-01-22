@@ -12,7 +12,7 @@
 #ifndef CONFIGS_H
 #define CONFIGS_H
 
-#define NAME_DEVICE "SPARC-2"
+#define NAME_DEVICE "SPARC-insights"
 
 #define SERIAL_DEBUG_BAUDRATE           (9600)
 #define DEVICE_DATA_SAVE_INTERVAL_TIME  (5000UL)
@@ -47,8 +47,8 @@ struct connectionStatus
 #define USING_WIFI_CONFIG
 #define WIFI_CONNECT_INTERVAL 30000
 #define WIFI_MAX_CONNECT_TRIAL 50
-const char ssid[] = "BK Star";
-const char pass[]  = "bkstar2021";
+const char ssid[] = "Tuyen";
+const char pass[]  = "0378974494";
 
 //========================== DEFINE FOR LOGGING ========================
 

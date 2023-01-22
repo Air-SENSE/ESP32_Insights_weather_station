@@ -15,7 +15,7 @@ ERROR_CODE WIFI_init()
     {
         log_e("WiFi connected!");
         log_e("IP: %s", WiFi.localIP().toString().c_str());
-        connectionStatus_st.wifiStatus = status_et::CONNECTED;
+        connectionStatus_st.wifiStatus = status_et::CONNECTED;    
         return ERROR_NONE;
     } else 
     {
